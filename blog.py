@@ -87,9 +87,10 @@ class HomeHandler(BaseHandler):
 class EntryHandler(BaseHandler):
     @tornado.web.removeslash
     def get(self, slug):
-        entry = db.Query(Entry).filter("slug =", slug).get()
-        if not entry: raise tornado.web.HTTPError(404)
-        self.render("entry.html", entry=entry)
+        if entry := db.Query(Entry).filter("slug =", slug).get():
+            self.render("entry.html", entry=entry)
+        else:
+            raise tornado.web.HTTPError(404)
 
 
 class ArchiveHandler(BaseHandler):
@@ -119,8 +120,7 @@ class ComposeHandler(BaseHandler):
 
     @administrator
     def post(self):
-        key = self.get_argument("key", None)
-        if key:
+        if key := self.get_argument("key", None):
             entry = Entry.get(key)
             entry.title = self.get_argument("title")
             entry.body = self.get_argument("markdown")
@@ -145,7 +145,7 @@ class ComposeHandler(BaseHandler):
                 markdown=markdown.markdown(self.get_argument("markdown")),
             )
         entry.put()
-        self.redirect("/entry/" + entry.slug)
+        self.redirect(f"/entry/{entry.slug}")
 
 
 class EntryModule(tornado.web.UIModule):
